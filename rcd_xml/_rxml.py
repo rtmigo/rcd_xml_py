@@ -1,4 +1,3 @@
-import unittest
 import urllib.parse
 import warnings
 from typing import *
@@ -101,12 +100,6 @@ def removeXmlNamespace(xmlText: str) -> str:
                    (?: (?:"[^"]+") | (?:'[^']+') ) 
                    ''',
                   '', xmlText, count=1, flags=re.MULTILINE | re.VERBOSE)
-
-
-class TestRemove(unittest.TestCase):
-    def test(self):
-        self.assertEqual("<sparql>", removeXmlNamespace(
-            "<sparql xmlns='http://www.w3.org/2005/sparql-results#'>"))
 
 
 def removeTrailingSpaces(xmlText: str) -> str:
