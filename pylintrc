@@ -1,6 +1,11 @@
 [MASTER]
 
 output-format=colorized
+extension-pkg-allow-list=lxml
+
+[TYPECHECK]
+ignored-modules=re
+ignored-classes=re
 
 [MESSAGES CONTROL]
 
