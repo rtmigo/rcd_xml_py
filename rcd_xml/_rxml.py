@@ -4,6 +4,7 @@ from typing import *
 
 import cssselect
 from lxml import etree
+from rcd_xml._remove_xmlns import removeXmlNamespace
 
 
 def innerText(node: etree.Element) -> str:
@@ -91,15 +92,6 @@ def removeXmlDecl(xmlText):
     xmlText = re.sub('''^\s*<\s*\?[^>]*\?\s*>''', "", xmlText, 1,
                      flags=re.MULTILINE)
     return xmlText
-
-
-def removeXmlNamespace(xmlText: str) -> str:
-    import re
-
-    return re.sub(r'''\sxmlns\s*=\s*
-                   (?: (?:"[^"]+") | (?:'[^']+') ) 
-                   ''',
-                  '', xmlText, count=1, flags=re.MULTILINE | re.VERBOSE)
 
 
 def removeTrailingSpaces(xmlText: str) -> str:
