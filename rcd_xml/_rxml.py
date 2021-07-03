@@ -1,27 +1,29 @@
+import re
 import urllib.parse
-import warnings
+from pathlib import Path
 from typing import *
 
 import cssselect
 from lxml import etree
-from rcd_xml._remove_xmlns import removeXmlNamespace
+from lxml.etree import _Element, _ElementTree, _ElementUnicodeResult
+
+from rcd_xml._remove_xmlns import remove_xmlns
 
 
-def innerText(node: etree.Element) -> str:
-    return etree.tostring(node, method="text",
-                          encoding="utf-8").decode()  # .decode()
+class NotFoundError(Exception):
+    pass
 
 
-def innerText_old(node, blank=""):
-    # этот метод считает текст внутри комментариев столь же ценным, как внутри
-    # элементов, и порой это приводит к нежелательным результатам
-    return blank.join([x for x in node.itertext()])
+def inner_text(node: _Element) -> str:
+    return etree.tostring(node,
+                          method="text",
+                          encoding="utf-8").decode()
 
 
-def addText(parent: etree.Element, text: str):
+def add_text(parent: _Element, text: str):
     # добавляет текст в конец элемента
 
-    def appendStr(lhs: str, rhs: str) -> str:
+    def append_str(lhs: str, rhs: str) -> str:
         return lhs + rhs if lhs else rhs
 
     # To insert text before any children of a node, use the node's text
@@ -29,181 +31,124 @@ def addText(parent: etree.Element, text: str):
     # tail attribute.
     children = parent.getchildren()
     if not children:
-        parent.text = appendStr(parent.text, text)
+        parent.text = append_str(parent.text, text)
     else:
-        children[-1].tail = appendStr(children[-1].tail, text)
+        children[-1].tail = append_str(children[-1].tail, text)
 
 
-def listChildNodes(parent: etree.Element) -> List:
+def list_child_nodes(parent: _Element) -> List:
     # возвращает непосредственно дочерние узлы. Которые могут быть
     # элементами, текстом, комментариями
     return parent.xpath("child::node()")
 
 
-def isElement(node: object) -> bool:
-    return isinstance(node, etree._Element) and node.tag is not etree.Comment
+def is_element(node: Any) -> bool:
+    return isinstance(node, _Element) and node.tag is not etree.Comment
 
 
-def isText(node: object) -> bool:
-    return isinstance(node, etree._ElementUnicodeResult)
+def is_text(node: Any) -> bool:
+    return isinstance(node, _ElementUnicodeResult)
 
 
-def isComment(node: object) -> bool:
-    return isinstance(node, etree._Element) and node.tag is etree.Comment
+def is_comment(node: Any) -> bool:
+    return isinstance(node, _Element) and node.tag is etree.Comment
 
 
-# return isinstance(arg, etree._ElementUnicodeResult)
-
-
-def findXpath(node, xpath: str) -> List[etree.Element]:
+def find_xpath(node: _Element, xpath: str) -> List[_Element]:
     return etree.XPath(xpath)(node)
 
 
-def find_css(node: etree.Element, css: str) -> List[etree.Element]:
+def find_css(node: _Element, css: str) -> List[_Element]:
     return etree.XPath(cssselect.GenericTranslator().css_to_xpath(css))(node)
 
 
-def findCss(node: etree.Element, css: str) -> List[etree.Element]:
-    warnings.warn("Use find_css", DeprecationWarning)
-    return find_css(node, css)
-
-
-class NotFoundError(Exception):
-    pass
-
-
-def findXpathOne(node, xpath):
-    lst = findXpath(node, xpath)
+def find_xpath_one(node: _Element, xpath: str) -> Optional[_Element]:
+    lst = find_xpath(node, xpath)
     if len(lst) == 1:
-        assert lst[0] is not None
-        return lst[0]
+        result = lst[0]
+        assert result is not None
+        return result
     if len(lst) == 0:
         return None
     raise NotFoundError("1 node expected, %d found." % len(lst))
 
 
-# WTF https://www.behance.net/rbrt/resume
-
-def removeXmlDecl(xmlText):
+def remove_xmldecl(xml_text: str) -> str:
     # Удаляет XML Declaration из начала строки.
     # Это хак, помогающий в простейших случаях избежать ошибки "Failed to
     # loadMultiple external entity "<?xml version="1.0"?>".
-    import re
-    xmlText = re.sub('''^\s*<\s*\?[^>]*\?\s*>''', "", xmlText, 1,
-                     flags=re.MULTILINE)
-    return xmlText
+    xml_text = re.sub(r'^\s*<\s*\?[^>]*\?\s*>', "", xml_text, 1,
+                      flags=re.MULTILINE)
+    return xml_text
 
 
-def removeTrailingSpaces(xmlText: str) -> str:
-    import re
-    return re.sub(">\s+$", ">", xmlText, count=1, flags=re.MULTILINE)
+def remove_trailing_space(xml_text: str) -> str:
+    return re.sub(">\s+$", ">", xml_text, count=1, flags=re.MULTILINE)
 
 
-# print(removeXmlNamespace("<sparql xmlns='http://www.w3.org/2005/sparql-results#'>"))
-# exit()
-
-# odnoklassniki
-
-
-def strToTree(xmlcode: str) -> etree._ElementTree:
+def str_to_tree(xml_code: str) -> _ElementTree:
     # загружает из строки XML-данные. Рассчитан на простейший случай,
-    # когда в данных нет отсылок к другим документам и entitites.
+    # когда в данных нет отсылок к другим документам и entities.
 
-    xmlcode = removeXmlDecl(xmlcode)
-    xmlcode = removeXmlNamespace(xmlcode)
-    return etree.fromstring(xmlcode)
+    xml_code = remove_xmldecl(xml_code)
+    xml_code = remove_xmlns(xml_code)
+    return etree.fromstring(xml_code)
 
 
-def xmlFileToTree(filename: str,
-                  recover=False) -> etree.ElementTree:
+def xml_file_to_tree(filename: Union[Path, str], recover=False) -> _ElementTree:
     # на самом деле etree._ElementTree:
 
     parser = etree.XMLParser(recover=recover)
-    tree = etree.parse(filename, parser)
+    tree = etree.parse(str(filename), parser)
     return tree
 
 
-def xmlFileToTreeNoNS(
-        filename: str) -> etree.ElementTree:  # на самом деле etree._ElementTree:
-
+def stripped_xml_file_to_tree(filename: str) -> _ElementTree:
     with open(filename, "rt") as f:
         xmlText = f.read()
 
-    # №print("1", flush=True)
-    xmlText = removeXmlDecl(xmlText)
-    # print("2", flush=True)
-    xmlText = removeXmlNamespace(xmlText)
+    xmlText = remove_xmldecl(xmlText)
+    xmlText = remove_xmlns(xmlText)
     if not xmlText.endswith(">"):
-        xmlText = removeTrailingSpaces(xmlText)
-    # if not xmlText.endswith(">"):
-    # print(xmlText[-10:])
-    #	raise ValueError("The XML does not end with '>'.")
-
-    # print("3", flush=True)
+        xmlText = remove_trailing_space(xmlText)
 
     return etree.fromstring(xmlText)
 
-    """
-    from io import StringIO, FileIO
-    import xml.etree.ElementTree as ET
 
-    with FileIO(filename) as f:
-
-    # instead of ET.fromstring(xml)
-        it = ET.iterparse(f)
-        for _, el in it:
-            if '}' in el.tag:
-                el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
-        return it
-    """
-
-
-def htmlFileToTree(filename: str,
-                   recover=True) -> etree.ElementTree:  # на самом деле etree._ElementTree:
-
+def html_file_to_tree(filename: Union[Path, str], recover=True) \
+        -> etree.ElementTree:
+    # на самом деле возвращается etree._ElementTree:
     parser = etree.HTMLParser(recover=recover)
-    tree = etree.parse(filename, parser)
+    tree = etree.parse(str(filename), parser)
     return tree
 
 
-def treeToFile(node, filename):
-    # str = etree.tostring(root, pretty_print=True)
-    # et = etree.ElementTree(root)
-    # et.write(sys.stdout, pretty_print=True)
-
-    # with open(filename, 'w') as file:
+def tree_to_file(node, filename):
     node.write(filename, pretty_print=True)
 
 
-def treeToStr(node):
+def tree_to_str(node: Union[_Element, _ElementTree]) -> str:
     return etree.tostring(node, pretty_print=True).decode()
 
 
-def htmlBytesToTree(outerHTML: bytes) -> etree.ElementTree:
+def html_bytes_to_etree(outer_html: bytes) -> _ElementTree:
     from io import BytesIO
-
     parser = etree.HTMLParser()
-    tree = etree.parse(BytesIO(outerHTML), parser)
-
+    tree = etree.parse(BytesIO(outer_html), parser)
     return tree
 
 
-def htmlCodeToTree(outerHTML: str) -> etree.ElementTree:
-    # на самом деле возвращается etree._ElementTree:
-
+def html_code_to_etree(outer_html: str) -> _ElementTree:
     from io import BytesIO
-
-    outerHtmlBytes = outerHTML.encode("utf-8")
-
+    outerHtmlBytes = outer_html.encode("utf-8")
     parser = etree.HTMLParser()
     tree = etree.parse(BytesIO(outerHtmlBytes), parser)
-
     return tree
 
 
-def htmlAnchorToLink(elementA, baseUrl):
+def html_anchor_to_link(elem, base_url):
     try:
-        href = elementA.attrib["href"]
+        href = elem.attrib["href"]
     except KeyError:
         return None
-    return urllib.parse.urljoin(baseUrl, href)
+    return urllib.parse.urljoin(base_url, href)

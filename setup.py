@@ -37,7 +37,7 @@ setup(
 
     license="MIT",
 
-    keywords="xml".split(),
+    keywords="xml css lxml html".split(),
 
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
