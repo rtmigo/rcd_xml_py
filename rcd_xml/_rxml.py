@@ -83,7 +83,7 @@ def remove_xmldecl(xml_text: str) -> str:
 
 
 def remove_trailing_space(xml_text: str) -> str:
-    return re.sub(">\s+$", ">", xml_text, count=1, flags=re.MULTILINE)
+    return re.sub(r">\s+$", ">", xml_text, count=1, flags=re.MULTILINE)
 
 
 def str_to_tree(xml_code: str) -> _ElementTree:
