@@ -4,6 +4,7 @@ from typing import List, Any
 from lxml import etree
 from lxml.etree import _ElementTree, _Element
 
+from rcd_xml import remove_xmlns
 from rcd_xml._rxml import html_file_to_tree, find_xpath, find_xpath_one, \
     html_bytes_to_etree, html_code_to_etree, tree_to_str, inner_text, \
     is_element, is_text, is_comment, add_text, list_child_nodes, str_to_tree, \
@@ -32,22 +33,22 @@ def findXpathOne(node, xpath):
 
 
 def htmlBytesToTree(outerHTML: bytes) -> _ElementTree:
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use html_bytes_to_etree", DeprecationWarning)
     return html_bytes_to_etree(outerHTML)
 
 
 def htmlCodeToTree(outerHTML: str) -> etree.ElementTree:
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use html_code_to_etree", DeprecationWarning)
     return html_code_to_etree(outerHTML)
 
 
 def treeToStr(node):
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use tree_to_str", DeprecationWarning)
     return tree_to_str(node)
 
 
 def innerText(node: _Element) -> str:
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use inner_text", DeprecationWarning)
     return inner_text(node)
 
 
@@ -59,22 +60,22 @@ def innerText_old(node, blank=""):
 
 
 def isElement(node: Any) -> bool:
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use is_element", DeprecationWarning)
     return is_element(node)
 
 
 def isText(node: Any) -> bool:
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use is_text", DeprecationWarning)
     return is_text(node)
 
 
 def isComment(node: Any) -> bool:
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use is_comment", DeprecationWarning)
     return is_comment(node)
 
 
 def addText(parent: _Element, text: str):
-    warnings.warn("Obsolete", DeprecationWarning)
+    warnings.warn("Use add_text", DeprecationWarning)
     add_text(parent, text)
 
 
@@ -116,3 +117,8 @@ def htmlAnchorToLink(elementA, baseUrl):
 def treeToFile(node, filename):
     warnings.warn("Obsolete", DeprecationWarning)
     tree_to_file(node, filename)
+
+
+def removeXmlNamespace(xmlText: str) -> str:
+    warnings.warn("Use remove_xml_namespace", DeprecationWarning)
+    return remove_xmlns(xmlText)
