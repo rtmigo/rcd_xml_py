@@ -4,8 +4,8 @@ from typing import List, Any
 from lxml import etree
 from lxml.etree import _ElementTree, _Element
 
-from rcd_xml import remove_xmlns
-from rcd_xml._rxml import html_file_to_tree, find_xpath, find_xpath_one, \
+from ._remove_xmlns import remove_xmlns
+from ._rxml import html_file_to_tree, find_xpath, find_xpath_one, \
     html_bytes_to_etree, html_code_to_etree, tree_to_str, inner_text, \
     is_element, is_text, is_comment, add_text, list_child_nodes, str_to_tree, \
     remove_xmldecl, xml_file_to_tree, stripped_xml_file_to_tree, \
