@@ -27,7 +27,8 @@ setup(
     author_email="ortemeo@gmail.com",
     url='https://github.com/rtmigo/rcd_xml_py',
 
-    packages=find_packages(exclude=['tests']),
+    packages=[name],
+    package_data={name: ["py.typed"]},
 
     install_requires=["cssselect", "lxml"],
     description="Reusable code handling XML files",
